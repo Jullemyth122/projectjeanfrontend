@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Side</title>
+    <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+
+    <div class="navbar">
+        <ul>
+            <li>
+                <a href="index.html"> Dashboard </a>
+            </li>
+            <li>
+                <a href="accounts.html"> Accounts </a>
+            </li>
+            <li>
+                <a href="reservations.html"> Reservations </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="accounts-component">        
+        <div class="account-subcomponent">
+            <!-- Add the edit form with a unique ID, initially hidden -->
+            <div class="edit-form" id="edit-form" style="display: none;">
+                <h2>Edit Account</h2>
+                <label for="edit-email">Email:</label>
+                <input type="text" id="edit-email">
+                <label for="edit-name">Name:</label>
+                <input type="text" id="edit-name">
+                <button id="save-edit-button">Save</button>
+                <button id="cancel-edit-button">Cancel</button>
+            </div>
+
+            <div class="search-bar">
+                <input
+                    type="text"
+                    placeholder="Search by name or email"
+                    value=""
+                    id="search-input"
+                />
+            </div>
+
+            <div class="list-of-accounts">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+
+        // Function to create a "Delete" button
+        function createDeleteButton(id) {
+            const button = document.createElement('button');
+            button.textContent = 'Delete';
+            button.dataset.id = id; // Add the data-id attribute
+            button.id = `delete-button-${id}`; // Unique ID for this button
+            return button;
+        }
+
+        // Function to create an "Edit" button
+        function createEditButton(id, account) {
+            const button = document.createElement('button');
+            button.textContent = 'Edit';
+            button.dataset.id = id; // Add the data-id attribute
+            button.id = `edit-button-${id}`; // Unique ID for this button
+            button.addEventListener('click', () => {
+                showEditForm(account);
+            });
+            return button;
+        }
+
+        // Function to show the edit form with the user's data
+        function showEditForm(account) {
+            const editForm = document.getElementById('edit-form');
+            const editEmailInput = document.getElementById('edit-email');
+            const editNameInput = document.getElementById('edit-name');
+            const saveEditButton = document.getElementById('save-edit-button');
+            const cancelEditButton = document.getElementById('cancel-edit-button');
+
+            // Populate the edit form with the account's data
+            editEmailInput.value = account.email;
+            editNameInput.value = account.firstname + ' ' + account.lastname;
+
+            // Show the edit form
+            editForm.style.display = 'block';
+
+            // Handle the "Save" button
+            saveEditButton.addEventListener('click', () => {
+                // Get the updated data from the inputs
+                const updatedEmail = editEmailInput.value;
+                const updatedName = editNameInput.value;
+                const accountId = account.id; // User's ID
+
+                // Create an object with the updated data
+                const updatedUserData = {
+                    email: updatedEmail,
+                    name: updatedName,
+                };
+
+                // Send a PUT request to update the user data
+                fetch(`http://localhost:5000/users/update-by-id/${accountId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedUserData),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 200) {
+                        // Data updated successfully
+                        // Hide the form after saving
+                        editForm.style.display = 'none';
+                    } else {
+                        // Handle errors if the update was not successful
+                        console.error('Error updating data:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating data:', error);
+                });
+            });
+
+
+            // Handle the "Cancel" button
+            cancelEditButton.addEventListener('click', () => {
+                // Simply hide the edit form without saving
+                editForm.style.display = 'none';
+            });
+        }
+
+        // Function to filter accounts based on search input
+        function filterAccounts() {
+            const searchInput = document.getElementById('search-input');
+            const searchText = searchInput.value.toLowerCase();
+            const accounts = document.querySelectorAll('.list-of-accounts tbody tr');
+
+            accounts.forEach(account => {
+                const accountName = account.querySelector('td:first-child').textContent.toLowerCase();
+                const accountEmail = account.querySelector('td:nth-child(2)').textContent.toLowerCase();
+
+                if (accountName.includes(searchText) || accountEmail.includes(searchText)) {
+                    account.style.display = 'table-row';
+                } else {
+                    account.style.display = 'none';
+                }
+            });
+        }
+
+        // Attach an event listener to the search input
+        document.getElementById('search-input').addEventListener('input', filterAccounts);
+
+
+        // Fetch account data and populate the table
+        fetch('http://localhost:5000/users/get-all')
+            .then(response => response.json())
+            .then(data => {
+                const accounts = data;
+
+                // Get a reference to the tbody element
+                const tbody = document.querySelector('.list-of-accounts tbody');
+
+                // Iterate through the accounts and create table rows
+                accounts.forEach(account => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${account.firstname} ${account.lastname}</td>
+                        <td>${account.email}</td>
+                        <td>
+                            ${createEditButton(account.id, account).outerHTML}
+                            ${createDeleteButton(account.id).outerHTML}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                accounts.forEach(account => {
+                    const deleteButton = document.getElementById(`delete-button-${account.id}`);
+                    console.log(deleteButton);
+                    deleteButton.addEventListener('click', () => {
+                        deleteAccount(account.id);
+                    });
+
+                    const editButton = document.getElementById(`edit-button-${account.id}`);
+                    editButton.addEventListener('click',() => {
+                        showEditForm(account)
+                    })
+                    // Add event listeners or logic for editing here.
+                });
+
+
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+        // Function to handle the delete action (you can customize this)
+        function deleteAccount(id) {
+            console.log(id)
+            if (confirm('Are you sure you want to delete this account?')) {
+                // Send a request to delete the account with the given ID
+                fetch(`http://localhost:5000/users/delete-by-id/${id}`, {
+                    method: 'DELETE',
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 200) {
+                            // Reload the page or update the table after successful deletion
+                            location.reload();
+                        } else {
+                            alert('Failed to delete the account.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }
+        }
+
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login and Registration Form</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="container">
+      <input type="checkbox" id="flip" />
+      <div class="cover">
+        <div class="front">
+          <img src="login.jpg" alt="" />
+        </div>
+      </div>
+      <div class="forms">
+        <div class="form-content">
+          <div class="login-form">
+            <div class="title">Login</div>
+            <form id="loginForm">
+              <div class="input-boxes">
+                <div class="input-box">
+                  <i class="fas fa-envelope"></i>
+                  <input type="text" id="email" placeholder="Enter your email" required />
+                </div>
+                <div class="input-box">
+                  <i class="fas fa-lock"></i>
+                  <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+                <div class="text"><a href="#">Forgot password?</a></div>
+                <div class="button input-box">
+                  <input type="submit" value="Sumbit" />
+                </div>
+                <div class="text sign-up-text">
+                  Don't have an account? <label for="flip">Sigup now</label>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="signup-form">
+            <div class="title">Signup</div>
+            <form name="form" id="registrationForm">
+              <div class="input-boxes">
+                <div class="input-box">
+                  <i class="fas fa-user"></i>
+                  <input
+                    type="text"
+                    placeholder="Enter your first name"
+                    id="firstname"
+                    name="firstname"
+                    required
+                  />
+                </div>
+                <div class="input-box">
+                  <i class="fas fa-user"></i>
+                  <input
+                    type="text"
+                    placeholder="Enter your last name"
+                    id="lastname"
+                    name="lastname"
+                    required
+                  />
+                </div>
+                <div class="input-box">
+                  <i class="fas fa-envelope"></i>
+                  <input
+                    type="text"
+                    placeholder="Enter your email"
+                    name="email"
+                    required
+                  />
+                </div>
+                <div class="input-box">
+                  <i class="fas fa-lock"></i>
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    name="password"
+                    required
+                  />
+                </div>
+                <div class="input-box">
+                  <i class="fas fa-lock"></i>
+                  <input
+                    type="text"
+                    placeholder="Contact No."
+                    name="contact_no"
+                    id="contact_no"
+                    required
+                  />
+                </div>
+                <div class="button input-box">
+                  <input type="submit" value="Create Account" />
+                </div>
+                <div class="text sign-up-text">
+                  Already have an account? <label for="flip">Login now</label>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+
+          fetch("http://localhost:5000/users/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.token) {
+                localStorage.setItem("userToken", data.token);
+                // Redirect to home.html with the token
+                window.location.href = "../index.html";
+              } else {
+                // Handle login failure, e.g., show an error message
+                console.log("Login failed");
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        });
+
+      document
+        .getElementById("registrationForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const firstname = document.querySelector(
+            'input[name="firstname"]'
+          ).value;
+          const lastname = document.querySelector(
+            'input[name="lastname"]'
+          ).value;
+          const email = document.querySelector('input[name="email"]').value;
+          const password = document.querySelector(
+            'input[name="password"]'
+          ).value;
+          const contact_no = document.querySelector(
+            'input[name="contact_no"]'
+          ).value;
+
+          fetch("http://localhost:5000/users/sign-up", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              firstname,
+              lastname,
+              email,
+              password,
+              contact_no,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Handle the response from the server here.
+              if (data.id) {
+                // Registration was successful, so redirect to the home page.
+                // localStorage.setItem('userToken', data.token);
+                // window.location.href = "PETHEART%20MAIN%20WEBSITE";
+                window.location.href = "../index.html"; // Replace 'home.html' with the actual URL of your home page.
+              } else {
+                // Handle any registration errors or display a message.
+                console.log(data);
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        });
+    </script>
+  </body>
+</html>
